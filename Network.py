@@ -44,8 +44,29 @@ class Layer(Network):
                                          )
 
     def forward(self, batch):
-        # batch has to be of size (batch_size, previous._width) or
-        # (batch_size, self.shape[0])
+
+        """
+        Updates current layer output based on its wights and previous
+        layer's output.
+
+        Parameters
+        ----------
+
+        batch : numpy.array
+            Has to be of size (batch_size, self.shape[0]).  At the
+            moment it is only needed for input layer (self._previous ==
+            None).  Has to be numpy.array or similar.  No conversion
+            implemented atm (saves time @ RT).
+
+        Return
+        ----------
+
+        None.
+        """
+
+        # TODO Layer.forward(..., batch) - fix argument list
+        # TODO Layer.forward(...) - add exceptions ?
+
         if self._previous != None:
             self._input = np.dot(self._previous._output, self._weights)
             self._output = self._network._activation(self._input)
