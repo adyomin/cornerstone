@@ -1,6 +1,12 @@
 import numpy as np
 
 
+def sigmoid(x):
+    return 1/(1 + np.exp(-x))
+
+def sigmoid_prime(x):
+    return x*(1 - x)
+
 class Network():
 
     """
@@ -9,14 +15,14 @@ class Network():
      - Add 'boilerplate' code (size & type assertions, exceptions, etc)
     """
 
-    def __init__(self, features, targets, h_size, activation,
-                 activation_prime, eta):
+    def __init__(self, features, targets, h_size, eta, activation=sigmoid,
+                 activation_prime=sigmoid_prime):
 
         """
 
         :param features:
         :param targets:
-        :param h_size:
+        :param h_size: tuple
         :param activation:
         :param activation_prime:
         :param eta:
@@ -34,11 +40,28 @@ class Network():
         self._targets = targets
         self._eta = eta
 
-
-
-        self.shape = (features.shape[1], tuple(h_size), targets.shape[1])
         self.n_features = features.shape[1]
         self.n_targets = targets.shape[1]
+        self.shape = (features.shape[1], tuple(h_size), targets.shape[1])
+        # depth takes into account only fully connected layers (i.e. ex input)
+        self.depth = len(h_size) + 1
+
+        self._layers = []
+        # add input layer
+        self._layers.append(Layer(self.n_features))
+        # add hidden layers
+        for width in h_size:
+            self._layers.append(Layer(width))
+        # add output layer
+        self._layers.append(Layer(self.n_targets))
+
+        # link layers with each other
+        for i in range(self.depth):
+            crt_layer = self._layers[i]
+            nxt_layer = self._layers[i + 1]
+            crt_layer._next = nxt_layer
+            nxt_layer._previous = crt_layer
+
 
     def train(self, batch_size, n_epochs, shuffle=True):
 
@@ -69,6 +92,8 @@ class Network():
         pass
 
 class Layer(Network):
+
+    # TODO Layer.__init__ - adjust for no links instantiation
 
     def __init__(self, width, previous=None, next=None):
         self._previous = previous
