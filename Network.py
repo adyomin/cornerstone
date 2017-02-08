@@ -12,6 +12,16 @@ class Network():
     def __init__(self, features, targets, h_size, activation,
                  activation_prime, eta):
 
+        """
+
+        :param features:
+        :param targets:
+        :param h_size:
+        :param activation:
+        :param activation_prime:
+        :param eta:
+        """
+
         # To-Do-List:
         # - add proper choice of activation function & activation_prime
         # - layer objects creation
@@ -24,14 +34,39 @@ class Network():
         self._targets = targets
         self._eta = eta
 
-        self.shape = (features.shape[1], tuple(h_size), targets.shape[1])
 
-    def train(self):
-        pass
+
+        self.shape = (features.shape[1], tuple(h_size), targets.shape[1])
+        self.n_features = features.shape[1]
+        self.n_targets = targets.shape[1]
+
+    def train(self, batch_size, n_epochs, shuffle=True):
+
+        """
+
+        :param batch_size:
+        :param n_epochs:
+        :param shuffle:
+        :return:
+        """
+
+        data = np.hstack((self._features, self._targets))
+        max_len = self._features.shape[0]
+
+        for epoch in range(n_epochs):
+            np.random.shuffle(data)
+            for i in range(0, max_len, batch_size):
+                x = data[i:min(i+batch_size, max_len), :-self.n_targets]
+                y = data[i:min(i+batch_size, max_len), -self.n_targets:]
+
+            if epoch%(n_epochs//10) == 0:
+                print('epoch = {0} / {1}, error = NEI'.format(epoch, n_epochs))
 
     def evaluate(self):
         pass
 
+    def save_weights(self):
+        pass
 
 class Layer(Network):
 
