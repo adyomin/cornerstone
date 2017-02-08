@@ -33,7 +33,8 @@ class Network():
 
 class Layer(Network):
 
-    def __init__(self, previous, next, width):
+    def __init__(self, network, previous, next, width):
+        self._network = network
         self._previous = previous
         self._next = next
         self._width = width
@@ -43,8 +44,14 @@ class Layer(Network):
                                          )
 
     def forward(self, batch):
-        # batch has to be of size (batch_size, previous._width)
-        pass
+        # batch has to be of size (batch_size, previous._width) or
+        # (batch_size, self.shape[0])
+        if self._previous != None:
+            self._input = np.dot(self._previous._output, self._weights)
+            self._output = self._network._activation(self._input)
+        else:
+            self._output = batch
+
 
     def backward(self):
         pass
