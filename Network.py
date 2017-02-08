@@ -35,26 +35,32 @@ class Network():
 
 class Layer(Network):
 
-    def __init__(self, previous, next, width):
+    def __init__(self, width, previous=None, next=None):
         self._previous = previous
-        self._input = previous._output
         self._next = next
         self._width = width
-        self._weights = np.random.normal(0,
-                                         scale=previous._width**(-0.5),
-                                         size= (previous._width, self._width)
-                                         )
+        if previous != None:
+            self._weights = np.random.normal(0,
+                                             scale=previous._width**(-0.5),
+                                             size=(previous._width, width)
+                                            )
+        if previous != None:
+            self._input = previous._output
+        else:
+            self._input = None
         self._arg = None
         self._output = None
-
-        if self._next != None:
+        if next != None:
             # (batch_size, self._width)
             self._d_cost_d_output = next._d_cost_d_input
-        else:
-            # This looks bad :-(
+        else:            # This looks bad :-(
             self._d_cost_d_output = None
-
-
+        self._d_output_d_arg = None
+        self._d_cost_d_arg = None
+        self._d_arg_d_input = None
+        self._d_cost_d_input = None
+        self._d_arg_d_weights = None
+        self._d_cost_d_weights = None
 
     def forward(self, batch=None):
 
@@ -76,11 +82,8 @@ class Layer(Network):
         None.
         """
 
-        # TODO Layer.forward(..., batch) - fix argument list
-        # TODO Layer.forward(...) - add exceptions ?
-        # TODO Layer.forward(...) - add matrix sizes
-
         if self._previous != None:
+            # (batch_size, self._width)
             self._arg = np.dot(self._input, self._weights)
             self._output = self._activation(self._arg)
         else:
