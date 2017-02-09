@@ -49,15 +49,15 @@ class Network():
 
         self._layers = []
         # add input layer
-        self._layers.append(Layer(self.n_features), activation=None,
-                            activation_prime=None)
+        self._layers.append(Layer(self.n_features, activation=None,
+                                  activation_prime=None))
         # add hidden layers
         for width in h_size:
             self._layers.append(Layer(width))
         del width
         # add output layer
-        self._layers.append(Layer(self.n_targets), activation=pass_input,
-                            activation_prime=pass_input_prime)
+        self._layers.append(Layer(self.n_targets, activation=pass_input,
+                            activation_prime=pass_input_prime))
 
         # Link layers with each other, initialize weights
         for i in range(self.depth):
