@@ -4,22 +4,18 @@ import numpy as np
 
 
 def sigmoid(x):
-    #print('Sigmoid called.')
     return 1/(1 + np.exp(-x))
 
 
 def sigmoid_prime(x):
-    #print('Sigmoid prime called.')
-    return x*(1 - x)
+    return np.multiply(x, (1 - x))
 
 
 def pass_input(x):
-    #print('Pass input called')
     return x
 
 
 def pass_input_prime(x):
-    #print('Pass input prime called.')
     return 1
 
 
@@ -64,6 +60,7 @@ class Network:
             self._layers.append(Layer(width, activation=sigmoid,
                                       activation_prime=sigmoid_prime))
         del width
+
         # add output layer
         self._layers.append(Layer(self.n_targets, activation=pass_input,
                             activation_prime=pass_input_prime))
@@ -91,8 +88,6 @@ class Network:
             del prev_width
             del crt_width
             del _size
-
-        print('Network object created.')
 
     def train(self, batch_size, n_epochs):
 
@@ -124,7 +119,6 @@ class Network:
                     #print('Layer {0} is about to fire.'.format(i))
                     current_layer.forward()
                 output_layer = self._layers[self.depth]
-                del j
 
                 # At this point all layers have produced their outputs, we need
                 # to measure the error and start propagating it back to tune
@@ -139,19 +133,30 @@ class Network:
                 # d error/d prediction = (prediction - error)' = 1
                 output_layer._d_cost_d_output = error
 
-                for j in range(self.depth, 0, -1):
-                    current_layer = self._layers[j]
-                    next_layer = self._layers[j - 1]
+                for k in range(self.depth, 0, -1):
+                    current_layer = self._layers[k]
+                    next_layer = self._layers[k - 1]
                     #print('Processing {0} layer.'.format(j))
                     current_layer.backward(eta=self._eta)
                     next_layer._d_cost_output = current_layer._d_cost_d_input
 
-            print(mse)
-            #if epoch%(n_epochs//10) == 0:
-            #    print('epoch = {0}/{1}, MSE = {2}'.format(epoch, n_epochs,
-            # mse))
+                #print('Current MSE = {0}'.format(mse))
 
-        # TODO: clean up all the garbage
+                del cost
+                del current_layer
+                del error
+                del input_layer
+                del next_layer
+                del output_layer
+                del prediction
+                del prev_layer
+                del x
+                del y
+
+            if epoch%(n_epochs//10) == 0:
+                print('epoch = {0}/{1}, MSE = {2}'.format(epoch, n_epochs, mse))
+        del data
+        del max_len
 
     def evaluate(self):
         print('Not Yet Implemented')
@@ -194,7 +199,6 @@ class Layer:
         # (batch_size, self._width)
         self._arg = np.dot(self._input, self._weights)
         self._output = self._activation(self._arg)
-        #print('Activation fired.')
 
     def backward(self, eta=0.001):
 
@@ -212,7 +216,7 @@ class Layer:
         """
 
         # (batch_size, self._width)
-        self._d_output_d_arg = self._activation_prime(self._arg)
+        self._d_output_d_arg = self._activation_prime(self._output)
 
         # (batch_size, self._width)
         # d cost/d arg = d cost/d output * d output/d arg
@@ -221,7 +225,10 @@ class Layer:
             # me, as I saw the value in the debugger, but still there was a
             # None type error in np.multiply as if reference resolution was
             # bugged / not obvious?  I am really confused here.
+            # Update: there was a potential mix up of for loop i-s.
+            # TODO: check functionality without additional assignment
             self._d_cost_d_output = self._next._d_cost_d_input
+
         self._d_cost_d_arg = np.multiply(self._d_cost_d_output,
                                          self._d_output_d_arg)
 
@@ -241,4 +248,4 @@ class Layer:
         self._d_cost_d_weights = np.matmul(self._d_arg_d_weights.T,
                                            self._d_cost_d_arg)
 
-        self._weights += -eta*self._d_cost_d_weights
+        self._weights += (-1)*eta*self._d_cost_d_weights
