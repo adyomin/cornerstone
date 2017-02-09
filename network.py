@@ -22,6 +22,7 @@ def pass_input_prime(x):
 class Network:
 
     # TODO: add Network() docstring
+    # TODO: add proper evaluation for epoch milestones
 
     """
     [TBD]
@@ -116,7 +117,6 @@ class Network:
                     current_layer = self._layers[j]
                     prev_layer = self._layers[j - 1]
                     current_layer._input = prev_layer._output
-                    #print('Layer {0} is about to fire.'.format(i))
                     current_layer.forward()
                 output_layer = self._layers[self.depth]
 
@@ -136,11 +136,8 @@ class Network:
                 for k in range(self.depth, 0, -1):
                     current_layer = self._layers[k]
                     next_layer = self._layers[k - 1]
-                    #print('Processing {0} layer.'.format(j))
                     current_layer.backward(eta=self._eta)
                     next_layer._d_cost_output = current_layer._d_cost_d_input
-
-                #print('Current MSE = {0}'.format(mse))
 
                 del cost
                 del current_layer
@@ -154,7 +151,8 @@ class Network:
                 del y
 
             if epoch%(n_epochs//10) == 0:
-                print('epoch = {0}/{1}, MSE = {2}'.format(epoch, n_epochs, mse))
+                print('epoch = {0}/{1}, MSE = {2:.5f}'.format(epoch, n_epochs,
+                                                           mse))
         del data
         del max_len
 
