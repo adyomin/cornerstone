@@ -9,35 +9,32 @@ def sigmoid(x):
 def sigmoid_prime(x):
     return x*(1 - x)
 
+def pass_input(x):
+    return x
+
+def pass_input_prime(x):
+    return 1
+
 class Network():
 
     # TODO: add Network() docstring
-    # TODO: move activation assignment to Layer.__init__
-    # (parent class method is not being called at all)
-    # TODO: (!) change output layer activation function to y=x
-    # TODO: add proper choice of activation function & activation_prime
 
     """
     [TBD]
     """
 
-    def __init__(self, features, targets, h_size, eta, activation=sigmoid,
-                 activation_prime=sigmoid_prime):
+    def __init__(self, features, targets, h_size, eta):
 
         """
 
         :param features:
         :param targets:
         :param h_size: tuple
-        :param activation:
-        :param activation_prime:
         :param eta:
         """
 
         # features have to be of shape (n_records, n_features)
         # targets have to be of shape (n_records, n_targets)
-        self._activation = activation
-        self._activation_prime = activation_prime
         self._features = features
         self._targets = targets
         self._eta = eta
@@ -52,13 +49,15 @@ class Network():
 
         self._layers = []
         # add input layer
-        self._layers.append(Layer(self.n_features))
+        self._layers.append(Layer(self.n_features), activation=None,
+                            activation_prime=None)
         # add hidden layers
         for width in h_size:
             self._layers.append(Layer(width))
         del width
         # add output layer
-        self._layers.append(Layer(self.n_targets))
+        self._layers.append(Layer(self.n_targets), activation=pass_input,
+                            activation_prime=pass_input_prime)
 
         # Link layers with each other, initialize weights
         for i in range(self.depth):
@@ -155,8 +154,11 @@ class Network():
 
 class Layer(Network):
 
-    def __init__(self, width):
+    def __init__(self, width, activation=sigmoid,
+                 activation_prime=sigmoid_prime):
         self._width = width
+        self._activation = activation
+        self._activation_prime = activation_prime
         self._previous = None
         self._next = None
         self._input = None
