@@ -9,10 +9,9 @@ def sigmoid_prime(x):
 
 class Network():
 
+    # TODO: add Network() docstring
     """
-    TBD:
-     - Complete doc string(s)
-     - Add 'boilerplate' code (size & type assertions, exceptions, etc)
+    [TBD]
     """
 
     def __init__(self, features, targets, h_size, eta, activation=sigmoid,
@@ -27,10 +26,8 @@ class Network():
         :param activation_prime:
         :param eta:
         """
-
-        # To-Do-List:
-        # - add proper choice of activation function & activation_prime
-        # - layer objects creation
+        # TODO: (!) change output layer activation function to y=x
+        # TODO: add proper choice of activation function & activation_prime
 
         # features have to be of shape (n_records, n_features)
         # targets have to be of shape (n_records, n_targets)
@@ -98,16 +95,39 @@ class Network():
             for i in range(0, max_len, batch_size):
                 x = data[i:min(i+batch_size, max_len), :-self.n_targets]
                 y = data[i:min(i+batch_size, max_len), -self.n_targets:]
-                # TODO: add layer list iteration and output calculations
+                input_layer = self._layers[0]
+                input_layer._output = x
+                for i in range(1, self.depth + 1):
+                    next_layer = self._layers[i]
+                    next_layer.forward()
+                output_layer = self._layers[self.depth]
+
+                # At this point all layers have produced their outputs, we need
+                # to measure the error and start propagating it back to tune
+                # the wights
+
+                prediction = output_layer._output
+                error = prediction - y
+                cost = 0.5*(error**2)
+                mse = ((cost*2).sum())/batch_size
+                # d cost/d cost = 1
+                # d cost/d error = (0.5*error**2)' = error
+                # d error/d prediction = (prediction - error)' = 1
+                output_layer._d_cost_d_output = error
+
+                for i in range(self.depth, 0, -1):
+                    current_layer = self._layers[i]
+                    current_layer.backward(eta=self._eta)
+
             if epoch%(n_epochs//10) == 0:
-                # TODO: add meaningful train progress report metric
-                print('epoch = {0} / {1}, error = n.e.i.'.format(epoch,
-                                                                n_epochs))
+                print('epoch = {0}/{1}, MSE = {2}'.format(epoch, n_epochs, mse))
 
     def evaluate(self):
+        print('Not Yet Implemented')
         pass
 
     def save_weights(self):
+        print('Not Yet Implemented')
         pass
 
 class Layer(Network):
@@ -128,35 +148,19 @@ class Layer(Network):
         self._d_arg_d_weights = None
         self._d_cost_d_weights = None
 
-    def forward(self, batch=None):
+    def forward(self):
 
         """
         Updates current layer output based on its wights and previous
         layer's output.
 
-        Parameters
-        ----------
-
-        batch : numpy.array
-            Has to be of size (batch_size, self.shape[0]).  At the
-            moment it is only needed for input layer (self._previous ==
-            None).  Has to be numpy.array or similar.
-
-        Return
-        ----------
-
-        None.
         """
 
-        if self._previous != None:
-            # (batch_size, self._width)
-            self._arg = np.dot(self._input, self._weights)
-            self._output = self._activation(self._arg)
-        else:
-            self._output = batch
+        # (batch_size, self._width)
+        self._arg = np.dot(self._input, self._weights)
+        self._output = self._activation(self._arg)
 
-
-    def backward(self, eta=0.001, d_cost_d_output=None):
+    def backward(self, eta=0.001):
 
         """
         Updates layer's weights based on d cost/d output and passes d cost/d
@@ -166,22 +170,10 @@ class Layer(Network):
         ----------
 
         eta : float
-            Learning rate.
+            Learning rate.  In some not so distant future would be nice to
+            change it for something more advanced.  Adam?
 
-        d_cost_d_output: numpy.array
-            Has to be of size (batch_size, self.width).  At the
-            moment it is only needed for the output layer (self._next ==
-            None).  Has to be numpy.array or similar.
-
-        Return
-        ----------
-
-        None.
         """
-
-        if self._next == None:
-            # (batch_size, self._width)
-            self._d_cost_d_output = d_cost_d_output
 
         # (batch_size, self._width)
         self._d_output_d_arg = self._activation_prime(self._arg)
@@ -198,6 +190,7 @@ class Layer(Network):
         # d cost/d input = d cost/d arg * d cost/d input
         self._d_cost_d_input = np.matmul(self._d_cost_d_arg,
                                          self._d_arg_d_input.T)
+
         # (batch_size, previous._width)
         self._d_arg_d_weights = self._input
 
