@@ -12,6 +12,11 @@ def sigmoid_prime(x):
 class Network():
 
     # TODO: add Network() docstring
+    # TODO: move activation assignment to Layer.__init__
+    # (parent class method is not being called at all)
+    # TODO: (!) change output layer activation function to y=x
+    # TODO: add proper choice of activation function & activation_prime
+
     """
     [TBD]
     """
@@ -28,8 +33,6 @@ class Network():
         :param activation_prime:
         :param eta:
         """
-        # TODO: (!) change output layer activation function to y=x
-        # TODO: add proper choice of activation function & activation_prime
 
         # features have to be of shape (n_records, n_features)
         # targets have to be of shape (n_records, n_targets)
@@ -38,6 +41,8 @@ class Network():
         self._features = features
         self._targets = targets
         self._eta = eta
+        self._forward_links = False
+        self._backward_links = False
 
         self.n_features = features.shape[1]
         self.n_targets = targets.shape[1]
@@ -51,11 +56,13 @@ class Network():
         # add hidden layers
         for width in h_size:
             self._layers.append(Layer(width))
+        del width
         # add output layer
         self._layers.append(Layer(self.n_targets))
 
-        # link layers with each other (init. weights, link outputs & d_costs)
+        # Link layers with each other, initialize weights
         for i in range(self.depth):
+            # This part debugs fine: all next & prev. links are correct
             crt_layer = self._layers[i]
             nxt_layer = self._layers[i + 1]
             crt_layer._next = nxt_layer
@@ -63,20 +70,26 @@ class Network():
 
             # initializing weights w.r.t. actual structure
             # all layers but the input get weights assigned
+            # This part debugs fine: weights seem to be correct (size, values)
             _scale = nxt_layer._previous._width**(-0.5)
             prev_width = nxt_layer._previous._width
             crt_width = nxt_layer._width
             _size = (prev_width, crt_width)
             nxt_layer._weights = np.random.normal(0, scale=_scale, size=_size)
 
-            # setting up layers' output forward flow
-            # all layers but the first get an input from each other
-            nxt_layer._input = crt_layer._output
-
             # setting up cost function derivative backward flow
             # all layers but the last get a derivative from each other
+            # TODO: change initiation somehow (None links atm)
             crt_layer._d_cost_d_output = nxt_layer._d_cost_d_input
 
+            del crt_layer
+            del nxt_layer
+            del _scale
+            del prev_width
+            del crt_width
+            del _size
+
+        print('Network object created.')
 
 
     def train(self, batch_size, n_epochs, shuffle=True):
@@ -100,8 +113,14 @@ class Network():
                 input_layer = self._layers[0]
                 input_layer._output = x
                 for i in range(1, self.depth + 1):
-                    next_layer = self._layers[i]
-                    next_layer.forward()
+                    # Cant find other way to link it.  I guess all these
+                    # links is a poor design choice in the first place, but at
+                    # this point I am really concerned about the approaching
+                    # deadline to invest more time in a better design :-(
+                    current_layer = self._layers[i]
+                    prev_layer = self._layers[i - 1]
+                    current_layer._input = prev_layer._output
+                    current_layer.forward()
                 output_layer = self._layers[self.depth]
 
                 # At this point all layers have produced their outputs, we need
@@ -123,6 +142,8 @@ class Network():
 
             if epoch%(n_epochs//10) == 0:
                 print('epoch = {0}/{1}, MSE = {2}'.format(epoch, n_epochs, mse))
+
+        # TODO: clean up all the garbage
 
     def evaluate(self):
         print('Not Yet Implemented')
