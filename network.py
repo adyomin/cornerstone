@@ -7,19 +7,23 @@ def sigmoid(x):
     #print('Sigmoid called.')
     return 1/(1 + np.exp(-x))
 
+
 def sigmoid_prime(x):
     #print('Sigmoid prime called.')
     return x*(1 - x)
+
 
 def pass_input(x):
     #print('Pass input called')
     return x
 
+
 def pass_input_prime(x):
     #print('Pass input prime called.')
     return 1
 
-class Network():
+
+class Network:
 
     # TODO: add Network() docstring
 
@@ -81,11 +85,6 @@ class Network():
             _size = (prev_width, crt_width)
             nxt_layer._weights = np.random.normal(0, scale=_scale, size=_size)
 
-            # setting up cost function derivative backward flow
-            # all layers but the last get a derivative from each other
-            # TODO: change initiation somehow (None links atm)
-            crt_layer._d_cost_d_output = nxt_layer._d_cost_d_input
-
             del crt_layer
             del nxt_layer
             del _scale
@@ -95,11 +94,9 @@ class Network():
 
         print('Network object created.')
 
-
-    def train(self, batch_size, n_epochs, shuffle=True):
+    def train(self, batch_size, n_epochs):
 
         """
-
         :param batch_size:
         :param n_epochs:
         :param shuffle:
@@ -116,17 +113,18 @@ class Network():
                 y = data[i:min(i+batch_size, max_len), -self.n_targets:]
                 input_layer = self._layers[0]
                 input_layer._output = x
-                for i in range(1, self.depth + 1):
+                for j in range(1, self.depth + 1):
                     # Cant find other way to link it.  I guess all these
                     # links is a poor design choice in the first place, but at
                     # this point I am really concerned about the approaching
                     # deadline to invest more time in a better design :-(
-                    current_layer = self._layers[i]
-                    prev_layer = self._layers[i - 1]
+                    current_layer = self._layers[j]
+                    prev_layer = self._layers[j - 1]
                     current_layer._input = prev_layer._output
                     #print('Layer {0} is about to fire.'.format(i))
                     current_layer.forward()
                 output_layer = self._layers[self.depth]
+                del j
 
                 # At this point all layers have produced their outputs, we need
                 # to measure the error and start propagating it back to tune
@@ -135,18 +133,23 @@ class Network():
                 prediction = output_layer._output
                 error = prediction - y
                 cost = 0.5*(error**2)
-                mse = ((cost*2).sum())/batch_size
+                mse = ((2*cost).sum())/batch_size
                 # d cost/d cost = 1
                 # d cost/d error = (0.5*error**2)' = error
                 # d error/d prediction = (prediction - error)' = 1
                 output_layer._d_cost_d_output = error
 
-                for i in range(self.depth, 0, -1):
-                    current_layer = self._layers[i]
+                for j in range(self.depth, 0, -1):
+                    current_layer = self._layers[j]
+                    next_layer = self._layers[j - 1]
+                    #print('Processing {0} layer.'.format(j))
                     current_layer.backward(eta=self._eta)
+                    next_layer._d_cost_output = current_layer._d_cost_d_input
 
-            if epoch%(n_epochs//10) == 0:
-                print('epoch = {0}/{1}, MSE = {2}'.format(epoch, n_epochs, mse))
+            print(mse)
+            #if epoch%(n_epochs//10) == 0:
+            #    print('epoch = {0}/{1}, MSE = {2}'.format(epoch, n_epochs,
+            # mse))
 
         # TODO: clean up all the garbage
 
@@ -158,7 +161,8 @@ class Network():
         print('Not Yet Implemented')
         pass
 
-class Layer(Network):
+
+class Layer:
 
     def __init__(self, width, activation=sigmoid,
                  activation_prime=sigmoid_prime):
@@ -212,6 +216,12 @@ class Layer(Network):
 
         # (batch_size, self._width)
         # d cost/d arg = d cost/d output * d output/d arg
+        if self._next is not None:
+            # I don't know why I had to add this, does not make much sense to
+            # me, as I saw the value in the debugger, but still there was a
+            # None type error in np.multiply as if reference resolution was
+            # bugged / not obvious?  I am really confused here.
+            self._d_cost_d_output = self._next._d_cost_d_input
         self._d_cost_d_arg = np.multiply(self._d_cost_d_output,
                                          self._d_output_d_arg)
 
