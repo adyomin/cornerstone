@@ -4,15 +4,19 @@ import numpy as np
 
 
 def sigmoid(x):
+    #print('Sigmoid called.')
     return 1/(1 + np.exp(-x))
 
 def sigmoid_prime(x):
+    #print('Sigmoid prime called.')
     return x*(1 - x)
 
 def pass_input(x):
+    #print('Pass input called')
     return x
 
 def pass_input_prime(x):
+    #print('Pass input prime called.')
     return 1
 
 class Network():
@@ -53,7 +57,8 @@ class Network():
                                   activation_prime=None))
         # add hidden layers
         for width in h_size:
-            self._layers.append(Layer(width))
+            self._layers.append(Layer(width, activation=sigmoid,
+                                      activation_prime=sigmoid_prime))
         del width
         # add output layer
         self._layers.append(Layer(self.n_targets, activation=pass_input,
@@ -119,6 +124,7 @@ class Network():
                     current_layer = self._layers[i]
                     prev_layer = self._layers[i - 1]
                     current_layer._input = prev_layer._output
+                    #print('Layer {0} is about to fire.'.format(i))
                     current_layer.forward()
                 output_layer = self._layers[self.depth]
 
@@ -184,6 +190,7 @@ class Layer(Network):
         # (batch_size, self._width)
         self._arg = np.dot(self._input, self._weights)
         self._output = self._activation(self._arg)
+        #print('Activation fired.')
 
     def backward(self, eta=0.001):
 
