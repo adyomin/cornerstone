@@ -55,12 +55,29 @@ class Network():
         # add output layer
         self._layers.append(Layer(self.n_targets))
 
-        # link layers with each other
+        # link layers with each other (init. weights, link outputs & d_costs)
         for i in range(self.depth):
             crt_layer = self._layers[i]
             nxt_layer = self._layers[i + 1]
             crt_layer._next = nxt_layer
             nxt_layer._previous = crt_layer
+
+            # initializing weights w.r.t. actual structure
+            # all layers but the input get weights assigned
+            _scale = nxt_layer._previous._width**(-0.5)
+            prev_width = nxt_layer._previous._width
+            crt_width = nxt_layer._width
+            _size = (prev_width, crt_width)
+            nxt_layer._weights = np.random.normal(0, scale=_scale, size=_size)
+
+            # setting up layers' output forward flow
+            # all layers but the first get an input from each other
+            nxt_layer._input = crt_layer._output
+
+            # setting up cost function derivative backward flow
+            # all layers but the last get a derivative from each other
+            crt_layer._d_cost_d_output = nxt_layer._d_cost_d_input
+
 
 
     def train(self, batch_size, n_epochs, shuffle=True):
@@ -81,9 +98,11 @@ class Network():
             for i in range(0, max_len, batch_size):
                 x = data[i:min(i+batch_size, max_len), :-self.n_targets]
                 y = data[i:min(i+batch_size, max_len), -self.n_targets:]
-
+                # TODO: add layer list iteration and output calculations
             if epoch%(n_epochs//10) == 0:
-                print('epoch = {0} / {1}, error = NEI'.format(epoch, n_epochs))
+                # TODO: add meaningful train progress report metric
+                print('epoch = {0} / {1}, error = n.e.i.'.format(epoch,
+                                                                n_epochs))
 
     def evaluate(self):
         pass
@@ -93,28 +112,15 @@ class Network():
 
 class Layer(Network):
 
-    # TODO Layer.__init__ - adjust for no links instantiation
-
-    def __init__(self, width, previous=None, next=None):
-        self._previous = previous
-        self._next = next
+    def __init__(self, width):
         self._width = width
-        if previous != None:
-            self._weights = np.random.normal(0,
-                                             scale=previous._width**(-0.5),
-                                             size=(previous._width, width)
-                                            )
-        if previous != None:
-            self._input = previous._output
-        else:
-            self._input = None
+        self._previous = None
+        self._next = None
+        self._input = None
+        self._weights = None
         self._arg = None
         self._output = None
-        if next != None:
-            # (batch_size, self._width)
-            self._d_cost_d_output = next._d_cost_d_input
-        else:            # This looks bad :-(
-            self._d_cost_d_output = None
+        self._d_cost_d_output = None
         self._d_output_d_arg = None
         self._d_cost_d_arg = None
         self._d_arg_d_input = None
