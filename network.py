@@ -1,3 +1,5 @@
+# Fully connected consecutive deep neural net
+
 import numpy as np
 
 
