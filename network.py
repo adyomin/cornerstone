@@ -5,48 +5,33 @@ import numpy as np
 
 class Network:
 
-    # TODO: add Network() docstring
-    # TODO: add proper evaluation for epoch milestones
-    # TODO: add choice of objective functions
+    # TODO: add Network() docstring(s)
 
-    """
-    [TBD]
-    """
-
-    def __init__(self, size, hidden_activation='sigmoid',
-                 output_activation='pass_input', cost_function='quadratic'):
-
+    def __init__(self, size, h_activation='sigmoid',
+                 o_activation='pass_input', c_function='quadratic'):
         """
 
         :param size: tuple; size[0] - n_features, input layers width.  size[-1]
          - n_targets, width of the output layer.
         """
-        # TODO: drop these attributes?
-        self.n_features = size[0]
-        self.n_targets = size[-1]
 
         self.shape = size
         # depth takes into account only fully connected layers (i.e. ex input)
         self.depth = len(size) - 1
 
-        self._hidden_activation = hidden_activation
-        self._output_activation = output_activation
-        self._cost_function = cost_function
-
+        self._cost_function = c_function
         self._weights = []
-        for i in range(self.depth):
-            prev_width = size[i]
-            cur_width = size[i + 1]
-            scale = prev_width**(-0.5)
-            wm_size = (prev_width, cur_width)
-            self._weights[i] = np.random.normal(0, scale=scale, size=wm_size)
-
-        # makes debugging cleaner, does nothing for actual memory management
-        del prev_width
-        del cur_width
-        del scale
-        del wm_size
-
+        for i in range(0, self.depth, 1):
+            input_width = size[i]
+            output_width = size[i + 1]
+            scale = input_width**(-0.5)
+            wm_size = (input_width, output_width)
+            self._weights.append(np.random.normal(0, scale=scale, size=wm_size))
+        # add activation functions list (string elements)
+        self._activation_list = []
+        for i in range (self.depth - 1):
+            self._activation_list.append(h_activation)
+        self._activation_list.append(o_activation)
         self._outputs = []
         self._d_cost_d_outputs = []
 
@@ -72,10 +57,23 @@ class Network:
     def MSE(self, prediction, label):
         return np.mean((prediction - label) ** 2)
 
-    def forward(self):
-        pass
+    def forward(self, x):
+        # input should be of size (batch_size, n_features)
+        exception_text_1 = 'n_features (x.shape[1]) is not equal to input ' \
+                           'width (self.shape[0])'
+        assert self.shape[0] == x.shape[1], exception_text_1
 
-    def train(self, batch_size, n_epochs):
+        layer_input = x
+        for i in range (0, self.depth):
+            layer_weights = self._weights[i]
+            a_function = self._activation_list[i]
+            # (batch_size, input_width) @ (input_width, output_width) -> (
+            # batch_size, output_width)
+            layer_arg = np.dot(layer_input, layer_weights)
+            self._outputs[i] = self._activation(layer_arg, function=a_function)
+            layer_input = self._outputs[i]
+
+def train(self, batch_size, n_epochs):
 
         """
         :param batch_size:
