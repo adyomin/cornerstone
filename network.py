@@ -47,6 +47,9 @@ class Network:
         del scale
         del wm_size
 
+        self._outputs = []
+        self._d_cost_d_outputs = []
+
     def _activation(self, x, function):
         if function == 'sigmoid':
             return 1/(1 + np.exp(-x))
@@ -68,6 +71,9 @@ class Network:
 
     def MSE(self, prediction, label):
         return np.mean((prediction - label) ** 2)
+
+    def forward(self):
+        pass
 
     def train(self, batch_size, n_epochs):
 
