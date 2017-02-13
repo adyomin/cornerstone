@@ -9,10 +9,28 @@ class Network:
 
     def __init__(self, size, h_activation='sigmoid',
                  o_activation='pass_input', c_function='quadratic'):
-        """
+        """ Network class constructor method.
 
-        :param size: tuple; size[0] - n_features, input layers width.  size[-1]
-         - n_targets, width of the output layer.
+        Parameters
+        ----------
+        size : tuple
+        size[0] - n_features, input layers width.  size[-1] - n_targets,
+        width of the output layer.
+
+        h_activation : string
+        Choice of activation function for all hidden layers.  Current options include:
+         - 'sigmoid' - returns 1/(1 + exp(-x))
+         - 'pass_input' - returns x
+
+        o_activation : string
+        Choice of output layer activation function.  Current options include:
+         - 'sigmoid' - returns 1/(1 + exp(-x))
+         - 'pass_input' - returns x
+
+        c_function : string
+        Choice of cost/loss/objective function prime for the network.
+        Current options include:
+         - 'quadratic' - returns error.  (0.5*(x**2))' = x.
         """
 
         self.shape = size
@@ -28,12 +46,12 @@ class Network:
             wm_size = (input_width, output_width)
             self._weights.append(np.random.normal(0, scale=scale, size=wm_size))
         # add activation functions list (string elements)
-        self._activation_list = []
+        self._activation_list = [[] for layer in range(self.depth)]
         for i in range (self.depth - 1):
-            self._activation_list.append(h_activation)
-        self._activation_list.append(o_activation)
-        self._outputs = []
-        self._d_cost_d_outputs = []
+            self._activation_list[i] = h_activation
+        self._activation_list[-1] = o_activation
+        self._outputs = [[] for layer in range(self.depth)]
+        self._d_cost_d_outputs = [[] for layer in range(self.depth)]
 
     def _activation(self, x, function):
         if function == 'sigmoid':
@@ -58,7 +76,19 @@ class Network:
         return np.mean((prediction - label) ** 2)
 
     def forward(self, x):
-        # input should be of size (batch_size, n_features)
+        """ Calculates network prediction of y for x.
+
+        Parameters
+        ----------
+        x : numpy.array
+            Input should be of size (batch_size, n_features).  Typical
+            features are real numbers with mean = 0, scaled to 1 standard
+            deviation.  Use of non-numeric numbers is not supposed
+            to produce any meaningful output.  Use of non-standardized
+            features would most likely produce poor results.
+        """
+
+        #
         exception_text_1 = 'n_features (x.shape[1]) is not equal to input ' \
                            'width (self.shape[0])'
         assert self.shape[0] == x.shape[1], exception_text_1
@@ -72,6 +102,18 @@ class Network:
             layer_arg = np.dot(layer_input, layer_weights)
             self._outputs[i] = self._activation(layer_arg, function=a_function)
             layer_input = self._outputs[i]
+
+    def backward(self, eta = 0.01):
+        """ Updates weights based on d cost/d output for each layer.
+
+        Parameters
+        ----------
+        eta : float
+            Learning rate.  In some not so distant future would be nice to
+            change it for something more advanced.  Adam?
+        """
+
+        pass
 
 def train(self, batch_size, n_epochs):
 
@@ -158,51 +200,8 @@ def train(self, batch_size, n_epochs):
 
 class Layer:
 
-    def __init__(self, width, activation=sigmoid,
-                 activation_prime=sigmoid_prime):
-        self._width = width
-        self._activation = activation
-        self._activation_prime = activation_prime
-        self._previous = None
-        self._next = None
-        self._input = None
-        self._weights = None
-        self._arg = None
-        self._output = None
-        self._d_cost_d_output = None
-        self._d_output_d_arg = None
-        self._d_cost_d_arg = None
-        self._d_arg_d_input = None
-        self._d_cost_d_input = None
-        self._d_arg_d_weights = None
-        self._d_cost_d_weights = None
-
-    def forward(self):
-
-        """
-        Updates current layer output based on its wights and previous
-        layer's output.
-
-        """
-
-        # (batch_size, self._width)
-        self._arg = np.dot(self._input, self._weights)
-        self._output = self._activation(self._arg)
-
     def backward(self, eta=0.001):
 
-        """
-        Updates layer's weights based on d cost/d output and passes d cost/d
-        input down the line.
-
-        Parameters
-        ----------
-
-        eta : float
-            Learning rate.  In some not so distant future would be nice to
-            change it for something more advanced.  Adam?
-
-        """
 
         # (batch_size, self._width)
         self._d_output_d_arg = self._activation_prime(self._output)
