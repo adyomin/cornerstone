@@ -3,92 +3,71 @@
 import numpy as np
 
 
-def sigmoid(x):
-    return 1/(1 + np.exp(-x))
-
-
-def sigmoid_prime(x):
-    return np.multiply(x, (1 - x))
-
-
-def pass_input(x):
-    return x
-
-
-def pass_input_prime(x):
-    return 1
-
-
 class Network:
 
     # TODO: add Network() docstring
     # TODO: add proper evaluation for epoch milestones
+    # TODO: add choice of objective functions
 
     """
     [TBD]
     """
 
-    def __init__(self, features, targets, h_size, eta):
+    def __init__(self, size, hidden_activation='sigmoid',
+                 output_activation='pass_input', cost_function='quadratic'):
 
         """
 
-        :param features:
-        :param targets:
-        :param h_size: tuple
-        :param eta:
+        :param size: tuple; size[0] - n_features, input layers width.  size[-1]
+         - n_targets, width of the output layer.
         """
+        # TODO: drop these attributes?
+        self.n_features = size[0]
+        self.n_targets = size[-1]
 
-        # features have to be of shape (n_records, n_features)
-        # targets have to be of shape (n_records, n_targets)
-        self._features = features
-        self._targets = targets
-        self._eta = eta
-        self._forward_links = False
-        self._backward_links = False
-
-        self.n_features = features.shape[1]
-        self.n_targets = targets.shape[1]
-        self.shape = (features.shape[1], tuple(h_size), targets.shape[1])
+        self.shape = size
         # depth takes into account only fully connected layers (i.e. ex input)
-        self.depth = len(h_size) + 1
+        self.depth = len(size) - 1
 
-        self._layers = []
-        # add input layer
-        self._layers.append(Layer(self.n_features, activation=None,
-                                  activation_prime=None))
-        # add hidden layers
-        for width in h_size:
-            self._layers.append(Layer(width, activation=sigmoid,
-                                      activation_prime=sigmoid_prime))
-        del width
+        self._hidden_activation = hidden_activation
+        self._output_activation = output_activation
+        self._cost_function = cost_function
 
-        # add output layer
-        self._layers.append(Layer(self.n_targets, activation=pass_input,
-                            activation_prime=pass_input_prime))
-
-        # Link layers with each other, initialize weights
+        self._weights = []
         for i in range(self.depth):
-            # This part debugs fine: all next & prev. links are correct
-            crt_layer = self._layers[i]
-            nxt_layer = self._layers[i + 1]
-            crt_layer._next = nxt_layer
-            nxt_layer._previous = crt_layer
+            prev_width = size[i]
+            cur_width = size[i + 1]
+            scale = prev_width**(-0.5)
+            wm_size = (prev_width, cur_width)
+            self._weights[i] = np.random.normal(0, scale=scale, size=wm_size)
 
-            # initializing weights w.r.t. actual structure
-            # all layers but the input get weights assigned
-            # This part debugs fine: weights seem to be correct (size, values)
-            _scale = nxt_layer._previous._width**(-0.5)
-            prev_width = nxt_layer._previous._width
-            crt_width = nxt_layer._width
-            _size = (prev_width, crt_width)
-            nxt_layer._weights = np.random.normal(0, scale=_scale, size=_size)
+        # makes debugging cleaner, does nothing for actual memory management
+        del prev_width
+        del cur_width
+        del scale
+        del wm_size
 
-            del crt_layer
-            del nxt_layer
-            del _scale
-            del prev_width
-            del crt_width
-            del _size
+    def _activation(self, x, function):
+        if function == 'sigmoid':
+            return 1/(1 + np.exp(-x))
+        elif function == 'pass_input':
+            return x
+
+    def _activation_prime(self, x, function):
+        if function == 'sigmoid':
+            # TODO: make this obvious (docstring?)
+            # x should be equal to the sigmoid output
+            return np.multiply(x, (1 -x))
+        elif function == 'pass_input':
+            return 1
+
+    def _cost_prime(self, x, function):
+        # 'quadratic' = 0.5*(x**2)
+        if function == 'quadratic':
+            return x
+
+    def MSE(self, prediction, label):
+        return np.mean((prediction - label) ** 2)
 
     def train(self, batch_size, n_epochs):
 
@@ -126,11 +105,9 @@ class Network:
 
                 prediction = output_layer._output
                 error = prediction - y
-                cost = 0.5*(error**2)
-                mse = ((2*cost).sum())/batch_size
                 # d cost/d cost = 1
                 # d cost/d error = (0.5*error**2)' = error
-                # d error/d prediction = (prediction - error)' = 1
+                # d error/d prediction = (prediction - target)' = 1
                 output_layer._d_cost_d_output = error
 
                 for k in range(self.depth, 0, -1):
@@ -139,7 +116,6 @@ class Network:
                     current_layer.backward(eta=self._eta)
                     next_layer._d_cost_output = current_layer._d_cost_d_input
 
-                del cost
                 del current_layer
                 del error
                 del input_layer
@@ -151,14 +127,25 @@ class Network:
                 del y
 
             if epoch%(n_epochs//10) == 0:
+                x = self._features
+                y = self._targets
+                mse = self.evaluate(x, y)
                 print('epoch = {0}/{1}, MSE = {2:.5f}'.format(epoch, n_epochs,
                                                            mse))
         del data
         del max_len
 
-    def evaluate(self):
-        print('Not Yet Implemented')
-        pass
+    def evaluate(self, x, y):
+        input_layer = self._layers[0]
+        input_layer._output = x
+        for j in range(1, self.depth + 1):
+            current_layer = self._layers[j]
+            prev_layer = self._layers[j - 1]
+            current_layer._input = prev_layer._output
+            current_layer.forward()
+        output_layer = self._layers[self.depth]
+        predictions = output_layer._output
+        return MSE(predictions, y)
 
     def save_weights(self):
         print('Not Yet Implemented')
