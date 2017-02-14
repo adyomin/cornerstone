@@ -6,35 +6,37 @@ import numpy as np
 class Network:
     # TODO: add Network() docstring(s)
 
-    def __init__(self, size, weights=None, h_activation='sigmoid',
-                 o_activation='pass_input', c_function='quadratic'):
+    def __init__(self, size, h_activation='sigmoid',
+                 o_activation='pass_input', c_function='quadratic',
+                 weights=None):
         """ Network class constructor method.
 
         Parameters
         ----------
         size : tuple
-        size[0] - n_features, input layers width.  size[-1] - n_targets,
-        width of the output layer.
-
-        weights : numpy.array
-        Create a network instance using previously saved weights.  Dimensions
-        control is on the user atm.
+            size[0] - n_features, input layers width.  size[-1] - n_targets,
+            width of the output layer.
 
         h_activation : string
-        Choice of activation function for all hidden layers.  Current options
-        include:
-         - 'sigmoid' - returns 1/(1 + exp(-x))
-         - 'pass_input' - returns x
+            Choice of activation function for all hidden layers.  Current
+            options include:
+             - 'sigmoid' - returns 1/(1 + numpy.exp(-x))
+             - 'pass_input' - returns x
 
         o_activation : string
-        Choice of output layer activation function.  Current options include:
-         - 'sigmoid' - returns 1/(1 + exp(-x))
-         - 'pass_input' - returns x
+            Choice of output layer activation function.  Current options
+            include:
+             - 'sigmoid' - returns 1/(1 + numpy.exp(-x))
+             - 'pass_input' - returns x
 
         c_function : string
-        Choice of cost/loss/objective function prime for the network.
-        Current options include:
-         - 'quadratic' - returns error.  (0.5*(x**2))' = x.
+            Choice of cost/loss/objective function prime for the network.
+            Current options include:
+             - 'quadratic' - returns error, (0.5*(error**2))' = error
+
+        weights : numpy.array - optional
+            Create a network instance using previously saved weights.
+            Dimensions control is on the user atm.
         """
 
         self.shape = size
@@ -80,7 +82,7 @@ class Network:
             return x
 
     def _MSE(self, prediction, label):
-        return np.mean((prediction - label) ** 2)
+        return np.mean((prediction - label)**2)
 
     def _forward(self, x):
         """ Calculates network prediction of y for x.
@@ -88,11 +90,9 @@ class Network:
         Parameters
         ----------
         x : numpy.array
-            Input should be of size (batch_size, n_features).  Typical
-            features are real numbers with mean = 0, scaled to 1 standard
-            deviation.  Use of non-numeric numbers is not supposed
-            to produce any meaningful output.  Use of non-standardized
-            features would most likely produce poor results.
+            Train examples matrix of size (batch_size, n_features).  Matrix
+            elements are expected to be real numbers with mean = 0.0,
+            scaled to 1.0 standard deviation.
         """
 
         exception_text_1 = 'n_features (x.shape[1]) is not equal to input ' \
@@ -191,28 +191,28 @@ class Network:
         self._weights[0] += -eta*d_cost_d_weights/batch_size
 
     def train(self, x, y, batch_size, eta, n_epochs):
-        """
-        Trains the instance with its current weights to predict y from x.
+        """ Trains the instance with its current weights to predict y from x.
 
         Parameters
         ----------
         x : numpy.array
-        Train examples matrix of size (n_records, n_features).
+            Train examples matrix of size (n_records, n_features).  Matrix
+            elements are expected to be real numbers with mean = 0.0, scaled
+            to 1.0 standard deviation.
 
         y : numpy.array
-        Train labels matrix of size (n_records, n_targets).
+            Train labels matrix of size (n_records, n_targets).
 
         batch_size : int
-        Defines how many train examples will be taken for the next step of
-        the weights update.  Would be great to add some intuition how to
-        choose a batch size.  TBD I guess.
+            Defines how many train examples will be taken for the next step of
+            the weights update.  Would be great to add some intuition how to
+            choose a batch size.  TBD I guess.
 
         n_epochs : int
-        Number of epochs to train over the whole x.
+            Number of epochs to train over the whole x.
 
         eta : float
-        Weight update step multiple.  Constant only ATM.
-
+            Weight update step multiple.  Constant only ATM.
         """
 
         data = np.hstack((self._features, self._targets))
