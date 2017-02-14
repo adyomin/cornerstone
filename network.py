@@ -4,7 +4,6 @@ import numpy as np
 
 
 class Network:
-    # TODO: add Network() docstring(s)
 
     def __init__(self, size, h_activation='sigmoid',
                  o_activation='pass_input', c_function='quadratic',
@@ -56,7 +55,7 @@ class Network:
             self._weights = weights
         # add activation functions list (string elements)
         self._activation_list = [[] for layer in range(self.depth)]
-        for i in range (self.depth - 1):
+        for i in range(self.depth - 1):
             self._activation_list[i] = h_activation
         self._activation_list[-1] = o_activation
         self._outputs = [[] for layer in range(self.depth)]
@@ -72,7 +71,7 @@ class Network:
     def _activation_prime(self, x, function):
         if function == 'sigmoid':
             # x should be equal to the sigmoid output
-            return np.multiply(x, (1 -x))
+            return np.multiply(x, (1 - x))
         elif function == 'pass_input':
             return 1
 
@@ -81,7 +80,7 @@ class Network:
         if function == 'quadratic':
             return x
 
-    def _MSE(self, prediction, label):
+    def _mean_squared_error(self, prediction, label):
         return np.mean((prediction - label)**2)
 
     def _forward(self, x):
@@ -102,7 +101,7 @@ class Network:
         layer_input = x
         # store input for backward pass
         self._tmp_value = x
-        for i in range (0, self.depth):
+        for i in range(0, self.depth):
             layer_weights = self._weights[i]
             a_function = self._activation_list[i]
             # (batch_size, input_width) @ (input_width, output_width) -> (
@@ -111,7 +110,7 @@ class Network:
             self._outputs[i] = self._activation(layer_arg, function=a_function)
             layer_input = self._outputs[i]
 
-    def _backward(self, y, batch_size, eta = 0.01):
+    def _backward(self, y, batch_size, eta=0.01):
         """ Updates weights based on d cost/d output for each layer.
 
         Parameters
@@ -253,23 +252,24 @@ class Network:
                     current_layer.backward(eta=self._eta)
                     next_layer._d_cost_output = current_layer._d_cost_d_input
 
-        if epoch%(n_epochs//10) == 0:
+        if epoch % (n_epochs//10) == 0:
             x = self._features
             y = self._targets
             mse = self.evaluate(x, y)
             print('epoch = {0}/{1}, MSE = {2:.5f}'.format(epoch, n_epochs, mse))
 
     def evaluate(self, x, y):
-        input_layer = self._layers[0]
-        input_layer._output = x
-        for j in range(1, self.depth + 1):
-            current_layer = self._layers[j]
-            prev_layer = self._layers[j - 1]
-            current_layer._input = prev_layer._output
-            current_layer.forward()
-        output_layer = self._layers[self.depth]
-        predictions = output_layer._output
-        return MSE(predictions, y)
+        pass
+        # input_layer = self._layers[0]
+        # input_layer._output = x
+        # for j in range(1, self.depth + 1):
+        #     current_layer = self._layers[j]
+        #     prev_layer = self._layers[j - 1]
+        #     current_layer._input = prev_layer._output
+        #     current_layer.forward()
+        # output_layer = self._layers[self.depth]
+        # predictions = output_layer._output
+        # return MSE(predictions, y)
 
     def get_weights(self):
         """Returns current network weights."""
