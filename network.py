@@ -185,17 +185,17 @@ class Network:
         d_cost_d_weights = np.matmul(d_arg_d_weights.T, d_cost_d_arg)
         self._weights[0] += -eta*d_cost_d_weights/batch_size
 
-    def train(self, x, y, batch_size, eta, n_epochs, shuffle=True):
+    def train(self, x_train, y_train, batch_size, eta, n_epochs, shuffle=True):
         """ Trains the instance with its current weights to predict y from x.
 
         Parameters
         ----------
-        x : numpy.array
+        x_train : numpy.array
             Train examples matrix of size (n_records, n_features).  Matrix
             elements are expected to be real numbers with mean = 0.0, scaled
             to 1.0 standard deviation.
 
-        y : numpy.array
+        y_train : numpy.array
             Train labels matrix of size (n_records, n_targets).
 
         batch_size : int
@@ -213,20 +213,20 @@ class Network:
             Determines whether or not data is being shuffled each epoch.
         """
 
-        exception_x = 'n_features (x.shape[1]) is not equal to input width (' \
-                      'self.shape[0])'
-        assert self.shape[0] == x.shape[1], exception_x
-        exception_y = 'n_targets (y.shape[1]) is not equal to output width (' \
-                      'self.shape[-1])'
-        assert self.shape[-1] == y.shape[1], exception_y
-        exception_n_records = 'x.shape[0] is not equal to y.shape[0]'
-        assert x.shape[0] == y.shape[0], exception_n_records
-        exception_ndim = 'len(x.shape) is not equal to len(y.shape)'
-        assert len(x.shape) == len(y.shape), exception_ndim
+        exception_x = 'n_features (x_train.shape[1]) is not equal to input ' \
+                      'width self.shape[0])'
+        assert self.shape[0] == x_train.shape[1], exception_x
+        exception_y = 'n_targets (y_train.shape[1]) is not equal to output ' \
+                      'width (self.shape[-1])'
+        assert self.shape[-1] == y_train.shape[1], exception_y
+        exception_n_records = 'x_train.shape[0] is not equal to y_train.shape[0]'
+        assert x_train.shape[0] == y_train.shape[0], exception_n_records
+        exception_ndim = 'len(x_train.shape) is not equal to len(y_train.shape)'
+        assert len(x_train.shape) == len(y_train.shape), exception_ndim
 
-        data = np.hstack((x, y))
-        n_records = x.shape[0]
-        n_targets = y.shape[1]
+        data = np.hstack((x_train, y_train))
+        n_records = x_train.shape[0]
+        n_targets = y_train.shape[1]
         for epoch in range(n_epochs):
             if shuffle:
                 np.random.shuffle(data)
@@ -236,10 +236,10 @@ class Network:
                 self._forward(x)
                 self._backward(y, batch_size=batch_size, eta=eta)
             if epoch % (n_epochs//10) == 0:
-                mse = self.evaluate(x, y)
+                mse = self.evaluate(x_train, y_train)
                 print('epoch = {0}/{1}, MSE = {2:.4f}'.format(epoch,
                                                               n_epochs, mse))
-        mse = self.evaluate(x, y)
+        mse = self.evaluate(x_train, y_train)
         print('epoch = {0}/{0}, MSE = {1:.4f}'.format(n_epochs, mse))
 
     def evaluate(self, x, y):
