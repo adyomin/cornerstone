@@ -52,6 +52,7 @@ class Network:
         self._activation_list[-1] = o_activation
         self._outputs = [[] for layer in range(self.depth)]
         self._d_cost_d_outputs = [[] for layer in range(self.depth)]
+        self._tmp_value = None
 
     def _activation(self, x, function):
         if function == 'sigmoid':
@@ -92,6 +93,8 @@ class Network:
         assert self.shape[0] == x.shape[1], exception_text_1
 
         layer_input = x
+        # store input for backward pass
+        self._tmp_value = x
         for i in range (0, self.depth):
             layer_weights = self._weights[i]
             a_function = self._activation_list[i]
@@ -126,14 +129,13 @@ class Network:
         # seed self._d_cost_d_outputs[-1]
         # (batch_size, output_width)
         # d cost/d error = (1/2*(error**2))' = error
-        d_cost_d_error = self._cost_prime(error, function='quadratic')
+        d_cost_d_error = self._cost_prime(error, function=self._cost_function)
+        # d error/ d output = (y - output)' = -1
         d_error_d_output = -1
         d_cost_d_output = d_cost_d_error*d_error_d_output
         self._d_cost_d_outputs[-1] = d_cost_d_output
 
         # get the loop going
-        # TODO: add separate calculation for layer_0
-        # or change the loop to eliminate the need for separate calculation
         for i in range(self.depth - 1, 0, -1):
             # (batch_size, output_width)
             output = self._outputs[i]
@@ -144,7 +146,7 @@ class Network:
             # (!) Making calculations efficient for sigmoid I have to hard code
             # the optimization for now, making this part of the derivation
             # erroneous for all other activation functions (expect pass_input).
-            # TODO: save local gradients during forward pass
+            # TODO: save local gradients during forward pass?
             d_output_d_arg = self._activation_prime(output, function=a_function)
             d_cost_d_arg = np.multiply(d_cost_d_output, d_output_d_arg)
 
@@ -170,15 +172,15 @@ class Network:
 
             self._weights[i] += -eta*d_cost_d_weights
 
+        # input layer weights update
         output = self._outputs[0]
         d_cost_d_output = self._d_cost_d_outputs[0]
         a_function = self._activation_list[0]
         d_output_d_arg = self._activation_prime(output, function=a_function)
         d_cost_d_arg = np.multiply(d_cost_d_output, d_output_d_arg)
-        d_arg_d_input = self._weights[0]
-
-
-
+        d_arg_d_weights = self._tmp_value
+        d_cost_d_weights = np.matmul(d_arg_d_weights.T, d_cost_d_arg)
+        self._weights[0] += -eta * d_cost_d_weights
 
     def train(self, batch_size, n_epochs):
 
