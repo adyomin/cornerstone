@@ -111,7 +111,7 @@ class Network:
             self._outputs[i] = self._activation(layer_arg, function=a_function)
             layer_input = self._outputs[i]
 
-    def _backward(self, y, eta = 0.01):
+    def _backward(self, y, batch_size, eta = 0.01):
         """ Updates weights based on d cost/d output for each layer.
 
         Parameters
@@ -153,7 +153,6 @@ class Network:
             # (!) Making calculations efficient for sigmoid I have to hard code
             # the optimization for now, making this part of the derivation
             # erroneous for all other activation functions (expect pass_input).
-            # TODO: save local gradients during forward pass?
             d_output_d_arg = self._activation_prime(output, function=a_function)
             d_cost_d_arg = np.multiply(d_cost_d_output, d_output_d_arg)
 
@@ -177,7 +176,7 @@ class Network:
             # d cost/d wights = d cost/d arg * d arg/d weights
             d_cost_d_weights = np.matmul(d_arg_d_weights.T, d_cost_d_arg)
 
-            self._weights[i] += -eta*d_cost_d_weights
+            self._weights[i] += -eta*d_cost_d_weights/batch_size
 
         # input layer weights update
         output = self._outputs[0]
@@ -185,75 +184,80 @@ class Network:
         a_function = self._activation_list[0]
         d_output_d_arg = self._activation_prime(output, function=a_function)
         d_cost_d_arg = np.multiply(d_cost_d_output, d_output_d_arg)
+        # d arg/d weights = (input * weights)' = input
+        # using x saved @ train() step
         d_arg_d_weights = self._tmp_value
         d_cost_d_weights = np.matmul(d_arg_d_weights.T, d_cost_d_arg)
-        self._weights[0] += -eta * d_cost_d_weights
+        self._weights[0] += -eta*d_cost_d_weights/batch_size
 
-    def train(self, batch_size, n_epochs):
+    def train(self, x, y, batch_size, eta, n_epochs):
+        """
+        Trains the instance with its current weights to predict y from x.
 
-            """
-            :param batch_size:
-            :param n_epochs:
-            :param shuffle:
-            :return:
-            """
+        Parameters
+        ----------
+        x : numpy.array
+        Train examples matrix of size (n_records, n_features).
 
-            data = np.hstack((self._features, self._targets))
-            max_len = self._features.shape[0]
+        y : numpy.array
+        Train labels matrix of size (n_records, n_targets).
 
-            for epoch in range(n_epochs):
-                np.random.shuffle(data)
-                for i in range(0, max_len, batch_size):
-                    x = data[i:min(i+batch_size, max_len), :-self.n_targets]
-                    y = data[i:min(i+batch_size, max_len), -self.n_targets:]
-                    input_layer = self._layers[0]
-                    input_layer._output = x
-                    for j in range(1, self.depth + 1):
-                        # Cant find other way to link it.  I guess all these
-                        # links is a poor design choice in the first place, but at
-                        # this point I am really concerned about the approaching
-                        # deadline to invest more time in a better design :-(
-                        current_layer = self._layers[j]
-                        prev_layer = self._layers[j - 1]
-                        current_layer._input = prev_layer._output
-                        current_layer.forward()
-                    output_layer = self._layers[self.depth]
+        batch_size : int
+        Defines how many train examples will be taken for the next step of
+        the weights update.  Would be great to add some intuition how to
+        choose a batch size.  TBD I guess.
 
-                    # At this point all layers have produced their outputs, we need
-                    # to measure the error and start propagating it back to tune
-                    # the wights
+        n_epochs : int
+        Number of epochs to train over the whole x.
 
-                    prediction = output_layer._output
-                    error = prediction - y
-                    # d cost/d cost = 1
-                    # d cost/d error = (0.5*error**2)' = error
-                    # d error/d prediction = (prediction - target)' = 1
-                    output_layer._d_cost_d_output = error
+        eta : float
+        Weight update step multiple.  Constant only ATM.
 
-                    for k in range(self.depth, 0, -1):
-                        current_layer = self._layers[k]
-                        next_layer = self._layers[k - 1]
-                        current_layer.backward(eta=self._eta)
-                        next_layer._d_cost_output = current_layer._d_cost_d_input
+        """
 
-                    del current_layer
-                    del error
-                    del input_layer
-                    del next_layer
-                    del output_layer
-                    del prediction
-                    del prev_layer
-                    del x
-                    del y
+        data = np.hstack((self._features, self._targets))
+        max_len = self._features.shape[0]
 
-                if epoch%(n_epochs//10) == 0:
-                    x = self._features
-                    y = self._targets
-                    mse = self.evaluate(x, y)
-                    print('epoch = {0}/{1}, MSE = {2:.5f}'.format(epoch, n_epochs,
-                                                               mse))
-            del data
-            del max_len
+        for epoch in range(n_epochs):
+            np.random.shuffle(data)
+            for i in range(0, max_len, batch_size):
+                x = data[i:min(i+batch_size, max_len), :-self.n_targets]
+                y = data[i:min(i+batch_size, max_len), -self.n_targets:]
+                input_layer = self._layers[0]
+                input_layer._output = x
+                for j in range(1, self.depth + 1):
+                    # Cant find other way to link it.  I guess all these
+                    # links is a poor design choice in the first place, but at
+                    # this point I am really concerned about the approaching
+                    # deadline to invest more time in a better design :-(
+                    current_layer = self._layers[j]
+                    prev_layer = self._layers[j - 1]
+                    current_layer._input = prev_layer._output
+                    current_layer.forward()
+                output_layer = self._layers[self.depth]
+
+                # At this point all layers have produced their outputs, we need
+                # to measure the error and start propagating it back to tune
+                # the wights
+
+                prediction = output_layer._output
+                error = prediction - y
+                # d cost/d cost = 1
+                # d cost/d error = (0.5*error**2)' = error
+                # d error/d prediction = (prediction - target)' = 1
+                output_layer._d_cost_d_output = error
+
+                for k in range(self.depth, 0, -1):
+                    current_layer = self._layers[k]
+                    next_layer = self._layers[k - 1]
+                    current_layer.backward(eta=self._eta)
+                    next_layer._d_cost_output = current_layer._d_cost_d_input
+
+        if epoch%(n_epochs//10) == 0:
+            x = self._features
+            y = self._targets
+            mse = self.evaluate(x, y)
+            print('epoch = {0}/{1}, MSE = {2:.5f}'.format(epoch, n_epochs, mse))
 
     def evaluate(self, x, y):
         input_layer = self._layers[0]
