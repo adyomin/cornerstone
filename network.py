@@ -80,9 +80,6 @@ class Network:
         if function == 'quadratic':
             return x
 
-    def _mean_squared_error(self, prediction, label):
-        return np.mean((prediction - label)**2)
-
     def _forward(self, x):
         """ Calculates network prediction of y for x.
 
