@@ -94,9 +94,9 @@ class Network:
             scaled to 1.0 standard deviation.
         """
 
-        exception_text_1 = 'n_features (x.shape[1]) is not equal to input ' \
+        exception_text_x = 'n_features (x.shape[1]) is not equal to input ' \
                            'width (self.shape[0])'
-        assert self.shape[0] == x.shape[1], exception_text_1
+        assert self.shape[0] == x.shape[1], exception_text_x
 
         layer_input = x
         # store input for backward pass
@@ -123,9 +123,9 @@ class Network:
             change it for something more advanced.  Adam?
         """
 
-        exception_text_1 = 'n_targets (x.shape[1]) is not equal to output ' \
+        exception_text_y = 'n_targets (y.shape[1]) is not equal to output ' \
                            'width (self.shape[-1])'
-        assert self.shape[-1] == y.shape[1], exception_text_1
+        assert self.shape[-1] == y.shape[1], exception_text_y
 
         # (batch_size, output_width)
         # for the purpose of d_cost_d_output calculation it is important to
@@ -175,6 +175,8 @@ class Network:
             # d cost/d wights = d cost/d arg * d arg/d weights
             d_cost_d_weights = np.matmul(d_arg_d_weights.T, d_cost_d_arg)
 
+            # (?) Honestly, I am not sure whether batch_size adjustment is
+            # necessary here or not.
             self._weights[i] += -eta*d_cost_d_weights/batch_size
 
         # input layer weights update
@@ -189,7 +191,7 @@ class Network:
         d_cost_d_weights = np.matmul(d_arg_d_weights.T, d_cost_d_arg)
         self._weights[0] += -eta*d_cost_d_weights/batch_size
 
-    def train(self, x, y, batch_size, eta, n_epochs):
+    def train(self, x, y, batch_size, eta, n_epochs, shuffle=True):
         """ Trains the instance with its current weights to predict y from x.
 
         Parameters
@@ -212,64 +214,41 @@ class Network:
 
         eta : float
             Weight update step multiple.  Constant only ATM.
+
+        shuffle: bool
+            Determines whether or not data is being shuffled each epoch.
         """
 
-        data = np.hstack((self._features, self._targets))
-        max_len = self._features.shape[0]
+        exception_x = 'n_features (x.shape[1]) is not equal to input ' \
+                           'width (self.shape[0])'
+        assert self.shape[0] == x.shape[1], exception_x
+        exception_y = 'n_targets (y.shape[1]) is not equal to output ' \
+                           'width (self.shape[-1])'
+        assert self.shape[-1] == y.shape[1], exception_y
+        exception_n_records = 'x.shape[0] is not equal to y.shape[0]'
+        assert x.shape[0] == y.shape[0], exception_n_records
+        exception_ndim = 'len(x.shape) is not equal to len(y.shape)'
+        assert len(x.shape) == len(y.shape), exception_ndim
 
+        data = np.hstack((x, y))
+        n_records = x.shape[0]
         for epoch in range(n_epochs):
-            np.random.shuffle(data)
-            for i in range(0, max_len, batch_size):
-                x = data[i:min(i+batch_size, max_len), :-self.n_targets]
-                y = data[i:min(i+batch_size, max_len), -self.n_targets:]
-                input_layer = self._layers[0]
-                input_layer._output = x
-                for j in range(1, self.depth + 1):
-                    # Cant find other way to link it.  I guess all these
-                    # links is a poor design choice in the first place, but at
-                    # this point I am really concerned about the approaching
-                    # deadline to invest more time in a better design :-(
-                    current_layer = self._layers[j]
-                    prev_layer = self._layers[j - 1]
-                    current_layer._input = prev_layer._output
-                    current_layer.forward()
-                output_layer = self._layers[self.depth]
-
-                # At this point all layers have produced their outputs, we need
-                # to measure the error and start propagating it back to tune
-                # the wights
-
-                prediction = output_layer._output
-                error = prediction - y
-                # d cost/d cost = 1
-                # d cost/d error = (0.5*error**2)' = error
-                # d error/d prediction = (prediction - target)' = 1
-                output_layer._d_cost_d_output = error
-
-                for k in range(self.depth, 0, -1):
-                    current_layer = self._layers[k]
-                    next_layer = self._layers[k - 1]
-                    current_layer.backward(eta=self._eta)
-                    next_layer._d_cost_output = current_layer._d_cost_d_input
-
+            if shuffle:
+                np.random.shuffle(data)
+            for i in range(0, n_records, batch_size):
+                x = data[i:min(i + batch_size, n_records), :-self.n_targets]
+                y = data[i:min(i + batch_size, n_records), -self.n_targets:]
+                self._forward(x)
+                self._backward(y, batch_size=batch_size, eta=eta)
         if epoch % (n_epochs//10) == 0:
-            x = self._features
-            y = self._targets
             mse = self.evaluate(x, y)
             print('epoch = {0}/{1}, MSE = {2:.5f}'.format(epoch, n_epochs, mse))
 
     def evaluate(self, x, y):
-        pass
-        # input_layer = self._layers[0]
-        # input_layer._output = x
-        # for j in range(1, self.depth + 1):
-        #     current_layer = self._layers[j]
-        #     prev_layer = self._layers[j - 1]
-        #     current_layer._input = prev_layer._output
-        #     current_layer.forward()
-        # output_layer = self._layers[self.depth]
-        # predictions = output_layer._output
-        # return MSE(predictions, y)
+        """Returns Mean Squared Error of the network for y over x."""
+        self._forward(x)
+        prediction = self._outputs[-1]
+        return np.mean((prediction - y)**2)
 
     def get_weights(self):
         """Returns current network weights."""
