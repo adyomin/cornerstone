@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 
 
-features = pd.read_csv('./data/bike_rental/features.csv')
-targets = pd.read_csv('./data/bike_rental/targets.csv')
+features = pd.read_csv('./data/features.csv')
+targets = pd.read_csv('./data/targets.csv')
 
 x = np.array(features.ix[:, 1:])
 y = np.array(targets.ix[:, 2:])
