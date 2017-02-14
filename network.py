@@ -1,6 +1,7 @@
 # Fully connected consecutive deep neural net
 
 import numpy as np
+import sys
 
 
 class Network:
@@ -235,12 +236,9 @@ class Network:
                 y = data[i:min(i + batch_size, n_records), -n_targets:]
                 self._forward(x)
                 self._backward(y, batch_size=batch_size, eta=eta)
-            if epoch % (n_epochs//10) == 0:
-                mse = self.evaluate(x_train, y_train)
-                print('epoch = {0}/{1}, MSE = {2:.4f}'.format(epoch,
-                                                              n_epochs, mse))
-        mse = self.evaluate(x_train, y_train)
-        print('epoch = {0}/{0}, MSE = {1:.4f}'.format(n_epochs, mse))
+            mse = self.evaluate(x_train, y_train)
+            sys.stdout.write("\rProgress: " + str(100 * epoch/n_epochs)[:4] \
+                             + "% ... Training loss: " + str(mse)[:5])
 
     def evaluate(self, x, y):
         """Returns Mean Squared Error of the network for y over x."""
