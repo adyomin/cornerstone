@@ -171,9 +171,6 @@ class Network:
             # (input_width, output_width)
             # d cost/d wights = d cost/d arg * d arg/d weights
             d_cost_d_weights = np.matmul(d_arg_d_weights.T, d_cost_d_arg)
-
-            # (?) Honestly, I am not sure whether batch_size adjustment is
-            # necessary here or not.
             self._weights[i] += -eta*d_cost_d_weights/batch_size
 
         # input layer weights update
@@ -216,11 +213,11 @@ class Network:
             Determines whether or not data is being shuffled each epoch.
         """
 
-        exception_x = 'n_features (x.shape[1]) is not equal to input ' \
-                           'width (self.shape[0])'
+        exception_x = 'n_features (x.shape[1]) is not equal to input width (' \
+                      'self.shape[0])'
         assert self.shape[0] == x.shape[1], exception_x
-        exception_y = 'n_targets (y.shape[1]) is not equal to output ' \
-                           'width (self.shape[-1])'
+        exception_y = 'n_targets (y.shape[1]) is not equal to output width (' \
+                      'self.shape[-1])'
         assert self.shape[-1] == y.shape[1], exception_y
         exception_n_records = 'x.shape[0] is not equal to y.shape[0]'
         assert x.shape[0] == y.shape[0], exception_n_records
@@ -229,26 +226,30 @@ class Network:
 
         data = np.hstack((x, y))
         n_records = x.shape[0]
+        n_targets = y.shape[1]
         for epoch in range(n_epochs):
             if shuffle:
                 np.random.shuffle(data)
             for i in range(0, n_records, batch_size):
-                x = data[i:min(i + batch_size, n_records), :-self.n_targets]
-                y = data[i:min(i + batch_size, n_records), -self.n_targets:]
+                x = data[i:min(i + batch_size, n_records), :-n_targets]
+                y = data[i:min(i + batch_size, n_records), -n_targets:]
                 self._forward(x)
                 self._backward(y, batch_size=batch_size, eta=eta)
-        if epoch % (n_epochs//10) == 0:
-            mse = self.evaluate(x, y)
-            print('epoch = {0}/{1}, MSE = {2:.5f}'.format(epoch, n_epochs, mse))
+            if epoch % (n_epochs//10) == 0:
+                mse = self.evaluate(x, y)
+                print('epoch = {0}/{1}, MSE = {2:.4f}'.format(epoch,
+                                                              n_epochs, mse))
+        mse = self.evaluate(x, y)
+        print('epoch = {0}/{0}, MSE = {1:.4f}'.format(n_epochs, mse))
 
     def evaluate(self, x, y):
         """Returns Mean Squared Error of the network for y over x."""
 
-        exception_x = 'n_features (x.shape[1]) is not equal to input ' \
-                           'width (self.shape[0])'
+        exception_x = 'n_features (x.shape[1]) is not equal to input width (' \
+                      'self.shape[0])'
         assert self.shape[0] == x.shape[1], exception_x
-        exception_y = 'n_targets (y.shape[1]) is not equal to output ' \
-                           'width (self.shape[-1])'
+        exception_y = 'n_targets (y.shape[1]) is not equal to output width (' \
+                      'self.shape[-1])'
         assert self.shape[-1] == y.shape[1], exception_y
         exception_n_records = 'x.shape[0] is not equal to y.shape[0]'
         assert x.shape[0] == y.shape[0], exception_n_records
