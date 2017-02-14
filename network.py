@@ -220,7 +220,8 @@ class Network:
         exception_y = 'n_targets (y_train.shape[1]) is not equal to output ' \
                       'width (self.shape[-1])'
         assert self.shape[-1] == y_train.shape[1], exception_y
-        exception_n_records = 'x_train.shape[0] is not equal to y_train.shape[0]'
+        exception_n_records = 'x_train.shape[0] is not equal to ' \
+                              'y_train.shape[0]'
         assert x_train.shape[0] == y_train.shape[0], exception_n_records
         exception_ndim = 'len(x_train.shape) is not equal to len(y_train.shape)'
         assert len(x_train.shape) == len(y_train.shape), exception_ndim
@@ -237,7 +238,7 @@ class Network:
                 self._forward(x)
                 self._backward(y, batch_size=batch_size, eta=eta)
             mse = self.evaluate(x_train, y_train)
-            sys.stdout.write("\rProgress: " + str(100 * epoch/n_epochs)[:4] \
+            sys.stdout.write("\rProgress: " + str(100 * epoch/n_epochs)[:4]
                              + "% ... Training loss: " + str(mse)[:5])
 
     def evaluate(self, x, y):
