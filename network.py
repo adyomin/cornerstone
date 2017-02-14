@@ -243,14 +243,38 @@ class Network:
 
     def evaluate(self, x, y):
         """Returns Mean Squared Error of the network for y over x."""
+
+        exception_x = 'n_features (x.shape[1]) is not equal to input ' \
+                           'width (self.shape[0])'
+        assert self.shape[0] == x.shape[1], exception_x
+        exception_y = 'n_targets (y.shape[1]) is not equal to output ' \
+                           'width (self.shape[-1])'
+        assert self.shape[-1] == y.shape[1], exception_y
+        exception_n_records = 'x.shape[0] is not equal to y.shape[0]'
+        assert x.shape[0] == y.shape[0], exception_n_records
+        exception_ndim = 'len(x.shape) is not equal to len(y.shape)'
+        assert len(x.shape) == len(y.shape), exception_ndim
+
         self._forward(x)
         prediction = self._outputs[-1]
         return np.mean((prediction - y)**2)
+
+    def predict(self, x):
+        """Predicts labels for x using current weights."""
+
+        exception_x = 'n_features (x.shape[1]) is not equal to input ' \
+                      'width (self.shape[0])'
+        assert self.shape[0] == x.shape[1], exception_x
+
+        self._forward(x)
+        pred_labels = self._outputs[-1]
+        return pred_labels
 
     def get_weights(self):
         """Returns current network weights."""
         return self._weights
 
-    def save_weights(self):
+    def _save_weights(self):
+        """Not yet implemented.  Public method eventually."""
         print('Not Yet Implemented')
         pass
