@@ -4,10 +4,9 @@ import numpy as np
 
 
 class Network:
-
     # TODO: add Network() docstring(s)
 
-    def __init__(self, size, h_activation='sigmoid',
+    def __init__(self, size, weights=None, h_activation='sigmoid',
                  o_activation='pass_input', c_function='quadratic'):
         """ Network class constructor method.
 
@@ -17,8 +16,13 @@ class Network:
         size[0] - n_features, input layers width.  size[-1] - n_targets,
         width of the output layer.
 
+        weights : numpy.array
+        Create a network instance using previously saved weights.  Dimensions
+        control is on the user atm.
+
         h_activation : string
-        Choice of activation function for all hidden layers.  Current options include:
+        Choice of activation function for all hidden layers.  Current options
+        include:
          - 'sigmoid' - returns 1/(1 + exp(-x))
          - 'pass_input' - returns x
 
@@ -36,15 +40,18 @@ class Network:
         self.shape = size
         # depth takes into account only fully connected layers (i.e. ex input)
         self.depth = len(size) - 1
-
         self._cost_function = c_function
-        self._weights = []
-        for i in range(0, self.depth, 1):
-            input_width = size[i]
-            output_width = size[i + 1]
-            scale = input_width**(-0.5)
-            wm_size = (input_width, output_width)
-            self._weights.append(np.random.normal(0, scale=scale, size=wm_size))
+        if weights is None:
+            self._weights = []
+            for i in range(0, self.depth, 1):
+                input_width = size[i]
+                output_width = size[i + 1]
+                scale = input_width**(-0.5)
+                wm_size = (input_width, output_width)
+                self._weights.append(np.random.normal(0, scale=scale,
+                                                      size=wm_size))
+        else:
+            self._weights = weights
         # add activation functions list (string elements)
         self._activation_list = [[] for layer in range(self.depth)]
         for i in range (self.depth - 1):
@@ -259,6 +266,10 @@ class Network:
         output_layer = self._layers[self.depth]
         predictions = output_layer._output
         return MSE(predictions, y)
+
+    def get_weights(self):
+        """Returns current network weights."""
+        return self._weights
 
     def save_weights(self):
         print('Not Yet Implemented')
