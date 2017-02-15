@@ -44,6 +44,11 @@ print(features.shape)
 labels = np.array(labels[:limit], ndmin=2).T
 print(labels.shape)
 
+print(features.sum())
+
 nn_model = nn.Network((73297, 256, 64, 1))
 
-nn_model.train(features[:128], labels[:128], batch_size=16, eta=0.01, n_epochs=1)
+weights = nn_model.get_weights()
+print(weights[0].shape)
+
+nn_model.train(features, labels, batch_size=16, eta=0.01, n_epochs=1)
