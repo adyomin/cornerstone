@@ -36,7 +36,8 @@ n_records = len(text_labels)
 n_features = len(vocab)
 features = np.zeros(shape=(batch_size, n_features))
 labels = np.zeros(shape=(batch_size, 1))
-nn_model = nn.Network((73297, 1024, 1))
+nn_model = nn.Network((73297, 1024, 1), h_activation='pass_input',
+                      o_activation='pass_input')
 
 for epoch in range(5):
     for i in range(0, n_records, batch_size):
