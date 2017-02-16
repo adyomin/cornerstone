@@ -243,6 +243,7 @@ class Network:
 
     def train_single_loop(self, x_train, y_train, batch_size, eta):
         """Single pass forward and backward over the inputs @ eta rate."""
+
         self._forward(x_train)
         self._backward(y_train, batch_size=batch_size, eta=eta)
 

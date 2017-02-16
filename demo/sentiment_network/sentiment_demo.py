@@ -4,6 +4,7 @@ import network as nn
 from collections import Counter
 import numpy as np
 import re
+import sys
 
 f = open('./data/reviews.txt','r')
 reviews = [line.strip('\n') for line in f]
@@ -18,34 +19,42 @@ full_stop_list = [line.strip('\n') for line in f]
 f.close()
 
 total_counts = Counter()
-
 for review in reviews:
         total_counts.update(re.findall('\w{3,}', review.lower()))
-
 for word in full_stop_list:
     del total_counts[word]
 
 vocab = set(total_counts.keys())
-
 word2index = Counter()
-
 for i, word in enumerate(vocab):
     word2index[word] = i
 
-limit = 1000
 
-features = np.zeros((limit, len(vocab)))
-for i, review in enumerate(reviews[:limit]):
-    for word in review.split():
-        if word in vocab:
-            features[i, word2index[word]] += 1
+batch_size = 512
+eta = 0.01
+n_records = len(text_labels)
+n_features = len(vocab)
+features = np.zeros(shape=(batch_size, n_features))
+labels = np.zeros(shape=(batch_size, 1))
+nn_model = nn.Network((73297, 1024, 1))
 
-labels = np.zeros(shape=(limit, 1))
-for i, label in enumerate(text_labels[:limit]):
-    if label == 'POSITIVE':
-        labels[i, 0] = 1
-    else:
-        labels[i, 0] = 0
-
-nn_model = nn.Network((73297, 256, 64, 1))
-nn_model.train(features, labels, batch_size=16, eta=0.01, n_epochs=100)
+for epoch in range(5):
+    for i in range(0, n_records, batch_size):
+        features *= 0
+        labels *= 0
+        for j, review in enumerate(reviews[i:i + batch_size]):
+            for word in review.split():
+                if word in vocab:
+                    features[j, word2index[word]] += 1
+        for k, label in enumerate(text_labels[i:i + batch_size]):
+            if label == 'POSITIVE':
+                labels[k, 0] = 1
+            else:
+                labels[k, 0] = 0
+        nn_model.train_single_loop(features, labels, batch_size, eta)
+        percentage = epoch/10*100
+        t_loss = nn_model.evaluate(x=features, y=labels)
+        print('Progress: {0:.2f}%, Training loss: {1:.4f}'.format(percentage,
+                                                              t_loss))
+    # sys.stdout.write('\rProgress: {0:.2f}% ... Training loss: '
+    #              '{1:.4f}'.format(percentage, t_loss))
