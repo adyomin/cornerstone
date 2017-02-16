@@ -141,16 +141,19 @@ class Network:
 
         # get the loop going
         for i in range(self.depth - 1, 0, -1):
+            layer_input = self._outputs[i - 1]
             # (batch_size, output_width)
             output = self._outputs[i]
             d_cost_d_output = self._d_cost_d_outputs[i]
             a_function = self._activation_list[i]
 
             # (batch_size, output_width)
-            # (!) Making calculations efficient for sigmoid I have to hard code
-            # the optimization for now, making this part of the derivation
-            # erroneous for all other activation functions (expect pass_input).
-            d_output_d_arg = self._activation_prime(output, function=a_function)
+            if a_function == 'sigmoid':
+                d_output_d_arg = self._activation_prime(output,
+                                                        function=a_function)
+            else:
+                d_output_d_arg = self._activation_prime(layer_input,
+                                                        function=a_function)
             d_cost_d_arg = np.multiply(d_cost_d_output, d_output_d_arg)
 
             # (inout_width, output_width)
@@ -175,14 +178,20 @@ class Network:
             self._weights[i] += -eta*d_cost_d_weights/batch_size
 
         # input layer weights update
+        layer_input = self._tmp_value
         output = self._outputs[0]
         d_cost_d_output = self._d_cost_d_outputs[0]
         a_function = self._activation_list[0]
-        d_output_d_arg = self._activation_prime(output, function=a_function)
+        if a_function == 'sigmoid':
+            d_output_d_arg = self._activation_prime(output,
+                                                    function=a_function)
+        else:
+            d_output_d_arg = self._activation_prime(layer_input,
+                                                    function=a_function)
         d_cost_d_arg = np.multiply(d_cost_d_output, d_output_d_arg)
         # d arg/d weights = (input * weights)' = input
         # using x saved @ train() step
-        d_arg_d_weights = self._tmp_value
+        d_arg_d_weights = layer_input
         d_cost_d_weights = np.matmul(d_arg_d_weights.T, d_cost_d_arg)
         self._weights[0] += -eta*d_cost_d_weights/batch_size
 
