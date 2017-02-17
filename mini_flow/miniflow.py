@@ -45,10 +45,10 @@ class Input(Node):
 
 
 class Add(Node):
-    def __init__(self, x, y):
+    def __init__(self, *inputs):
         # You could access `x` and `y` in forward with
         # self.inbound_nodes[0] (`x`) and self.inbound_nodes[1] (`y`)
-        Node.__init__(self, [x, y])
+        Node.__init__(self, inputs)
 
     def forward(self):
         """
@@ -59,6 +59,22 @@ class Add(Node):
         for node in self.inbound_nodes:
             self.value += node.value
 
+
+class Mul(Node):
+    # Using arguments unpacking (* for lists & tuples, ** for dictionaries)
+    # docs.python.org/3/tutorial/controlflow.html#unpacking-argument-lists
+
+    def __init__(self, *inputs):
+        Node.__init__(self, inputs)
+
+    def forward(self):
+        """
+        Set self.value to the product of inbound inbound_nodes' values.
+        """
+
+        self.value = 1
+        for node in self.inbound_nodes:
+            self.value *= node.value
 
 """
 No need to change anything below here!
