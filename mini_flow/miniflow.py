@@ -153,11 +153,9 @@ class MSE(Node):
         shape_error = 'y.shape is not equal to a.shape'
         assert y.shape == a.shape, shape_error
 
-        # assuming (batch_size, output_width) shape of y
-        batch_size = len(y)
         # outputs vector or squared errors
         error = np.square(y - a)
-        self.value = np.sum(error)/batch_size
+        self.value = np.mean(error)
 
 
 """
