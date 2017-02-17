@@ -1,10 +1,9 @@
 # based on @iamtrask materials for Udacity.
 
-import network as nn
+import re
 from collections import Counter
 import numpy as np
-import re
-import sys
+from first_network import network as nn
 
 f = open('./data/reviews.txt','r')
 reviews = [line.strip('\n') for line in f]
