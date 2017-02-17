@@ -133,6 +133,33 @@ class Sigmoid(Node):
         # changing this method.
         self.value = self._sigmoid(self.inbound_nodes[0].value)
 
+
+class MSE(Node):
+    def __init__(self, y, a):
+        """
+        The mean squared error cost function.  Should be used as the last
+        node for a network.
+        """
+        # Call the base class' constructor.
+        Node.__init__(self, [y, a])
+
+    def forward(self):
+        """
+        Calculates the mean squared error.
+        """
+        y = self.inbound_nodes[0].value
+        a = self.inbound_nodes[1].value
+
+        shape_error = 'y.shape is not equal to a.shape'
+        assert y.shape == a.shape, shape_error
+
+        # assuming (batch_size, output_width) shape of y
+        batch_size = len(y)
+        # outputs vector or squared errors
+        error = np.square(y - a)
+        self.value = np.sum(error)/batch_size
+
+
 """
 No need to change anything below here!
 """
