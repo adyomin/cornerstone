@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class Node(object):
     def __init__(self, inbound_nodes=[]):
         # Nodes from which this Node receives values
@@ -21,6 +22,7 @@ class Node(object):
         store the result in self.value.
         """
         raise NotImplemented
+
 
 class Input(Node):
     def __init__(self):
@@ -74,6 +76,7 @@ class Mul(Node):
         for node in self.inbound_nodes:
             self.value *= node.value
 
+
 class Linear(Node):
     def __init__(self, inputs, weights, bias):
         Node.__init__(self, [inputs, weights, bias])
@@ -96,6 +99,39 @@ class Linear(Node):
         # assumed shape = (1, output_width)
         bias = self.inbound_nodes[2].value
         self.value = np.dot(inputs, weights) + bias
+
+
+class Sigmoid(Node):
+    """
+    You need to fix the `_sigmoid` and `forward` methods.
+    """
+    def __init__(self, node):
+        Node.__init__(self, [node])
+
+    def _sigmoid(self, x):
+        """
+        This method is separate from `forward` because it will be used later
+        with `backward` as well.
+
+        `x`: A numpy array-like object.
+
+        Return the result of the sigmoid function.
+
+        Your code here!
+        """
+        return 1/(1 + np.exp(-x))
+
+
+    def forward(self):
+        """
+        Set the value of this node to the result of the sigmoid function,
+        `_sigmoid`.
+
+        Your code here!
+        """
+        # This is a dummy value to prevent numpy errors if you test without
+        # changing this method.
+        self.value = self._sigmoid(self.inbound_nodes[0].value)
 
 """
 No need to change anything below here!
