@@ -90,11 +90,10 @@ class Linear(Node):
         Your code goes here!
         """
         # assumed shape = (batch_size, input_width)
-        inputs = np.array(self.inbound_nodes[0].value, ndmin=2)
-        # assumed shape = (output_width, input_width)
-        # preferred shape = (input_width, output_width)
-        weights = np.array(self.inbound_nodes[1].value, ndmin=2).T
-        # assumed shape = (1, 1)
+        inputs = self.inbound_nodes[0].value
+        # assumed shape = (input_width, output_width)
+        weights = self.inbound_nodes[1].value
+        # assumed shape = (1, output_width)
         bias = self.inbound_nodes[2].value
         self.value = np.dot(inputs, weights) + bias
 
