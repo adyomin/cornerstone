@@ -9,16 +9,18 @@ build a network that solves the equation below?
 (x + y) + y
 """
 
-from miniflow import *
+from mini_flow import miniflow as mf
 
-x, y = Input(), Input()
+x, y = mf.Input(), mf.Input()
 
-f = Add(x, y)
+f = mf.Add(x, y)
 
 feed_dict = {x: 10, y: 5}
 
-sorted_nodes = topological_sort(feed_dict)
-output = forward_pass(f, sorted_nodes)
+sorted_nodes = mf.topological_sort(feed_dict)
+output = mf.forward_pass(f, sorted_nodes)
 
-# NOTE: because topological_sort set the values for the `Input` nodes we could # also access the value for x with x.value (same goes for y).
-print("{0} + {1} = {2} (according to miniflow)".format(feed_dict[x], feed_dict[y], output))
+# NOTE: because topological_sort set the values for the `Input` nodes we
+# could # also access the value for x with x.value (same goes for y).
+print("{0} + {1} = {2} (according to miniflow)".format(feed_dict[x],
+                                                       feed_dict[y], output))
