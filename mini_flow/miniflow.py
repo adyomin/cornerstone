@@ -116,6 +116,7 @@ class Mul(Node):
         # TODO: Implements Mul.backward?
         raise NotImplementedError
 
+
 class Linear(Node):
     """
     Represents a node that performs a linear transform.
@@ -213,6 +214,7 @@ class Sigmoid(Node):
             self.gradients[self.inbound_nodes[0]] += np.multiply(grad_cost,
                                                                  d_sig_d_x)
 
+
 class MSE(Node):
     def __init__(self, y, a):
         """
@@ -252,7 +254,6 @@ class MSE(Node):
         # d cost/d a = c cost/d error * d error/d a
         # (batch_size, output_width)
         self.gradients[self.inbound_nodes[1]] = (-2/self.m)*self.diff
-
 
 
 def topological_sort(feed_dict):
@@ -324,3 +325,21 @@ def forward_and_backward(graph):
     # Backward pass
     for node in graph[::-1]:
         node.backward()
+
+
+def sgd_update(trainables, learning_rate=1e-2):
+    """
+    Updates the value of each trainable with SGD.
+
+    Parameters
+    ----------
+
+    trainables : list
+        A list of `Input` Nodes representing weights/biases.
+
+    learning_rate : float
+        The learning rate.
+    """
+
+    for t in trainables:
+        t.value -= +learning_rate*t.gradients[t]
