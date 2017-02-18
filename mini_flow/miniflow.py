@@ -236,8 +236,8 @@ class MSE(Node):
 
         # outputs vector or squared errors
         self.m = y.shape[0]
-        self.diff = np.square(y - a)
-        self.value = np.mean(self.diff)
+        self.diff = y - a
+        self.value = np.mean(self.diff**2)
 
     def backward(self):
         """
