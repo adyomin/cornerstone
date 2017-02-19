@@ -3,7 +3,7 @@
 import re
 from collections import Counter
 import numpy as np
-from first_network import network as nn
+from FirstNetwork import network as nn
 
 f = open('./data/reviews.txt','r')
 reviews = [line.strip('\n') for line in f]
