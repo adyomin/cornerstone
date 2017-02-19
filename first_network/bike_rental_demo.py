@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from FirstNetwork import network as net
+from first_network import network as net
 
 train_features = pd.read_csv('./data/train_features.csv')
 train_targets = pd.read_csv('./data/train_targets.csv')
