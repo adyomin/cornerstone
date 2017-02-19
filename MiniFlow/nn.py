@@ -2,7 +2,7 @@ import numpy as np
 import sys
 from sklearn.datasets import load_boston
 from sklearn.utils import shuffle, resample
-from mini_flow import miniflow as mf
+from MiniFlow import miniflow as mf
 
 # # Add node demo
 #
